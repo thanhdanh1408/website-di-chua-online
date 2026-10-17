@@ -22,7 +22,7 @@ service cloud.firestore {
     }
 
     match /leaderboard/{uid} {
-      allow read: if signedIn();
+      allow read: if true;
       allow create, update: if owner(uid) && googleUser()
         && request.resource.data.keys().hasOnly(['name', 'merit', 'updatedAt'])
         && request.resource.data.merit is number;
@@ -32,7 +32,7 @@ service cloud.firestore {
 
     match /wishes/{wishId} {
       allow read: if admin()
-        || (signedIn() && resource.data.status == 'approved')
+        || resource.data.status == 'approved'
         || (signedIn() && resource.data.authorId == request.auth.uid);
       allow create: if googleUser()
         && request.resource.data.authorId == request.auth.uid

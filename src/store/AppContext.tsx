@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { linkWithPopup, onIdTokenChanged, signInAnonymously, signInWithPopup, signOut } from 'firebase/auth'
+import { onIdTokenChanged, signInWithPopup, signOut } from 'firebase/auth'
 import { collection, doc, onSnapshot, orderBy, query, runTransaction, setDoc, where, type DocumentData } from 'firebase/firestore'
 import type { IncenseStick, LeaderboardEntry, MeritSource, Offering, PersistedState, User, Wish, WishStatus } from '../types'
 import { pointsToday, todayKey } from '../lib/business'
@@ -53,6 +53,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const message = error instanceof Error ? error.message : 'Không thể kết nối Firebase.'
     setFirebaseError(message); setToast(`Firebase: ${message}`)
   }, [])
+  const showDataError = useCallback((error: unknown) => {
+    const message = error instanceof Error ? error.message : 'Không thể đọc dữ liệu Firestore.'
+    setToast(`Firestore: ${message}`)
+  }, [])
   const savePersonal = useCallback(async (next: PersistedState) => {
     if (!db || !auth?.currentUser) return
     const uid = auth.currentUser.uid
@@ -73,21 +77,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let unsubscribePersonal = () => {}; let unsubscribeWishes = () => {}; let unsubscribeUsers = () => {}; let unsubscribeLeaderboard = () => {}
     const unsubscribeAuth = onIdTokenChanged(activeAuth, async firebaseUser => {
       unsubscribePersonal(); unsubscribeWishes(); unsubscribeUsers(); unsubscribeLeaderboard()
-      if (!firebaseUser) { try { await signInAnonymously(activeAuth) } catch (error) { showError(error); setFirebaseReady(true) }; return }
-      try {
+      const subscribeSharedData = (isAdmin: boolean) => {
         unsubscribeLeaderboard = onSnapshot(query(collection(activeDb, 'leaderboard'), orderBy('merit', 'desc')),
-          snapshot => setLeaderboard(snapshot.docs.slice(0, 20).map(item => ({ id: item.id, name: String(item.data().name || 'Thiện hữu'), merit: Number(item.data().merit || 0) }))), showError)
+          snapshot => setLeaderboard(snapshot.docs.slice(0, 20).map(item => ({ id: item.id, name: String(item.data().name || 'Thiện hữu'), merit: Number(item.data().merit || 0) }))), showDataError)
+        const wishQuery = isAdmin ? query(collection(activeDb, 'wishes'), orderBy('createdAt', 'desc'))
+          : query(collection(activeDb, 'wishes'), where('status', '==', 'approved'), orderBy('createdAt', 'desc'))
+        unsubscribeWishes = onSnapshot(wishQuery, snapshot => {
+          replaceState({ ...stateRef.current, wishes: snapshot.docs.map(item => ({ id: item.id, ...item.data() } as Wish)) })
+        }, showDataError)
+      }
+      if (!firebaseUser) {
+        replaceState({ ...emptyState(), guestId: makeId() }); setLeaderboard([])
+        subscribeSharedData(false); setFirebaseReady(true); setFirebaseError(null); return
+      }
+      if (firebaseUser.isAnonymous) { await signOut(activeAuth); return }
+      try {
         const token = await firebaseUser.getIdTokenResult()
         const isAdmin = token.claims.admin === true
-        const appUser: User | null = firebaseUser.isAnonymous ? null : {
+        const appUser: User = {
           id: firebaseUser.uid, name: firebaseUser.displayName || 'Thiện hữu', email: firebaseUser.email || '',
           photoURL: firebaseUser.photoURL || undefined, role: isAdmin ? 'admin' : 'user',
         }
-        if (appUser) await setDoc(doc(activeDb, 'users', firebaseUser.uid), {
+        replaceState({ ...emptyState(), guestId: firebaseUser.uid, user: appUser })
+        subscribeSharedData(isAdmin)
+        void setDoc(doc(activeDb, 'users', firebaseUser.uid), {
           name: appUser.name, email: appUser.email, photoURL: appUser.photoURL || null, provider: 'google.com',
           createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(), lastSeenAt: new Date().toISOString(),
-        }, { merge: true })
-        replaceState({ ...emptyState(), guestId: firebaseUser.uid, user: appUser })
+        }, { merge: true }).catch(showDataError)
         unsubscribePersonal = onSnapshot(doc(activeDb, 'user_states', firebaseUser.uid), async snapshot => {
           if (!snapshot.exists()) await setDoc(snapshot.ref, { ...personalData(emptyState()), updatedAt: new Date().toISOString() })
           else {
@@ -96,22 +112,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
               incense: data.incense?.filter(item => item.burnUntil > Date.now()) || [] })
           }
           setFirebaseReady(true); setFirebaseError(null)
-        }, showError)
-        const wishQuery = isAdmin ? query(collection(activeDb, 'wishes'), orderBy('createdAt', 'desc'))
-          : query(collection(activeDb, 'wishes'), where('status', '==', 'approved'), orderBy('createdAt', 'desc'))
-        unsubscribeWishes = onSnapshot(wishQuery, snapshot => {
-          replaceState({ ...stateRef.current, wishes: snapshot.docs.map(item => ({ id: item.id, ...item.data() } as Wish)) })
-        }, showError)
+        }, showDataError)
         if (isAdmin) unsubscribeUsers = onSnapshot(collection(activeDb, 'users'), snapshot => {
           const users = snapshot.docs.map(item => { const data = item.data(); return {
             id: item.id, name: String(data.name || 'Thiện hữu'), email: String(data.email || ''),
             role: item.id === firebaseUser.uid ? 'admin' : 'user', photoURL: data.photoURL || undefined,
           } as User }); replaceState({ ...stateRef.current, users })
-        }, showError)
+        }, showDataError)
+        setFirebaseReady(true); setFirebaseError(null)
       } catch (error) { showError(error); setFirebaseReady(true) }
     })
     return () => { unsubscribeAuth(); unsubscribePersonal(); unsubscribeWishes(); unsubscribeUsers(); unsubscribeLeaderboard() }
-  }, [replaceState, showError])
+  }, [replaceState, showDataError, showError])
 
   useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(null), 3200); return () => clearTimeout(timer) }, [toast])
   const grantMerit = (current: PersistedState, source: MeritSource, points: number, label: string, sourceCap = 100) => {
@@ -134,11 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loginWithGoogle=async()=>{
     const { auth: activeAuth }=requireFirebase()
     try {
-      const current=activeAuth.currentUser
-      if(current?.isAnonymous) {
-        try { await linkWithPopup(current,googleProvider) }
-        catch(error){const code=(error as {code?:string}).code;if(code==='auth/credential-already-in-use'||code==='auth/email-already-in-use')await signInWithPopup(activeAuth,googleProvider);else throw error}
-      } else await signInWithPopup(activeAuth,googleProvider)
+      await signInWithPopup(activeAuth,googleProvider)
       setToast('Đăng nhập Google thành công.')
     } catch(error){showError(error);throw error}
   }
@@ -151,8 +159,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     transaction.update(wishRef,{status,moderatedAt:new Date().toISOString(),moderatedBy:auth?.currentUser?.uid})
     if(userRef&&userSnap?.exists()){const data=userSnap.data();const logs=Array.isArray(data.meritLogs)?data.meritLogs:[];if(!logs.some((log:{label?:string})=>log.label===`Sớ ${wishId} được duyệt`)){const nextMerit=Number(data.merit||0)+5;transaction.update(userRef,{merit:nextMerit,meritLogs:[{id:makeId(),source:'wish',points:5,at:new Date().toISOString(),label:`Sớ ${wishId} được duyệt`},...logs]});transaction.set(doc(activeDb,'leaderboard',wish.authorId),{name:wish.anonymous?'Người hữu duyên':wish.author,merit:nextMerit,updatedAt:new Date().toISOString()},{merge:true})}}
   }).catch(showError)}
-  const reactWish=(wishId:string)=>{const current=stateRef.current;const actorId=current.guestId;const wish=current.wishes.find(item=>item.id===wishId);if(!db||!actorId||!wish||wish.authorId===actorId||wish.reactions.includes(actorId))return false;const activeDb=db;void runTransaction(activeDb,async transaction=>{const ref=doc(activeDb,'wishes',wishId);const snap=await transaction.get(ref);if(!snap.exists())return;const reactions=(snap.data().reactions||[]) as string[];if(!reactions.includes(actorId))transaction.update(ref,{reactions:[...reactions,actorId]})}).catch(showError);return true}
-  const reportWish=(wishId:string)=>{const current=stateRef.current;const actorId=current.guestId;const wish=current.wishes.find(item=>item.id===wishId);if(!db||!actorId||!wish||wish.authorId===actorId||wish.reports.includes(actorId))return false;const activeDb=db;void runTransaction(activeDb,async transaction=>{const ref=doc(activeDb,'wishes',wishId);const snap=await transaction.get(ref);if(!snap.exists())return;const reports=(snap.data().reports||[]) as string[];if(!reports.includes(actorId)){const next=[...reports,actorId];transaction.update(ref,{reports:next,...(next.length>=3?{status:'hidden'}:{})})}}).then(()=>setToast('Cảm ơn bạn đã báo cáo. Ban quản trị sẽ xem xét.')).catch(showError);return true}
+  const reactWish=(wishId:string)=>{const current=stateRef.current;const actorId=current.user?.id;const wish=current.wishes.find(item=>item.id===wishId);if(!db||!actorId||!wish||wish.authorId===actorId||wish.reactions.includes(actorId))return false;const activeDb=db;void runTransaction(activeDb,async transaction=>{const ref=doc(activeDb,'wishes',wishId);const snap=await transaction.get(ref);if(!snap.exists())return;const reactions=(snap.data().reactions||[]) as string[];if(!reactions.includes(actorId))transaction.update(ref,{reactions:[...reactions,actorId]})}).catch(showDataError);return true}
+  const reportWish=(wishId:string)=>{const current=stateRef.current;const actorId=current.user?.id;const wish=current.wishes.find(item=>item.id===wishId);if(!db||!actorId||!wish||wish.authorId===actorId||wish.reports.includes(actorId))return false;const activeDb=db;void runTransaction(activeDb,async transaction=>{const ref=doc(activeDb,'wishes',wishId);const snap=await transaction.get(ref);if(!snap.exists())return;const reports=(snap.data().reports||[]) as string[];if(!reports.includes(actorId)){const next=[...reports,actorId];transaction.update(ref,{reports:next,...(next.length>=3?{status:'hidden'}:{})})}}).then(()=>setToast('Cảm ơn bạn đã báo cáo. Ban quản trị sẽ xem xét.')).catch(showDataError);return true}
   const checkin=()=>{const today=todayKey();if(stateRef.current.checkins.includes(today))return false;updatePersonal(current=>grantMerit({...current,checkins:[...current.checkins,today]},'checkin',2,'Điểm danh an lành',2).state);setToast('Điểm danh thành công · +2 công đức');return true}
   const toggleOffering=(offering:Offering)=>updatePersonal(current=>({...current,offerings:current.offerings.includes(offering)?current.offerings.filter(item=>item!==offering):[...current.offerings,offering]}))
 

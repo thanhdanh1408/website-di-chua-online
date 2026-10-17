@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "firebase:set-admin": "node --env-file=.env.admin.local scripts/set-admin.mjs",
     "test:rules": "npx firebase-tools emulators:exec --only firestore --project demo-di-chua-online \"vitest run tests/firestore.rules.test.ts\"",
-    "test:mobile": "node scripts/check-mobile.mjs"
+    "test:mobile": "node scripts/check-mobile.mjs",
+    "test:firebase-auth": "node scripts/check-google-auth.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

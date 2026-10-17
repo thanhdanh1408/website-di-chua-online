@@ -16,10 +16,9 @@ describe.skipIf(!hasEmulator)('Firestore security rules', () => {
   beforeEach(async () => env.clearFirestore())
   afterAll(async () => env.cleanup())
 
-  it('khách chỉ ghi trạng thái của chính mình và không thể gửi sớ', async () => {
-    const guest = env.authenticatedContext('guest-1', { firebase: { sign_in_provider: 'anonymous' } }).firestore()
-    await assertSucceeds(setDoc(doc(guest, 'user_states/guest-1'), { merit: 0 }))
-    await assertFails(setDoc(doc(guest, 'user_states/guest-2'), { merit: 999 }))
+  it('khách chưa đăng nhập không thể ghi trạng thái hoặc gửi sớ', async () => {
+    const guest = env.unauthenticatedContext().firestore()
+    await assertFails(setDoc(doc(guest, 'user_states/guest-1'), { merit: 0 }))
     await assertFails(setDoc(doc(guest, 'wishes/w1'), {
       authorId: 'guest-1', author: 'Khách', content: 'Một lời nguyện đủ dài', anonymous: false,
       status: 'pending', reactions: [], reports: [], createdAt: new Date().toISOString(),
@@ -40,16 +39,18 @@ describe.skipIf(!hasEmulator)('Firestore security rules', () => {
     await assertSucceeds(updateDoc(doc(admin, 'wishes/w1'), { status: 'approved' }))
   })
 
-  it('khách được đọc và reaction sớ đã duyệt nhưng không được tự reaction', async () => {
+  it('khách được đọc sớ đã duyệt nhưng chỉ tài khoản đăng nhập được reaction', async () => {
     await env.withSecurityRulesDisabled(async context => setDoc(doc(context.firestore(), 'wishes/w2'), {
       authorId: 'member-1', author: 'Minh An', content: 'Mong mọi người luôn được bình an', anonymous: false,
       status: 'approved', reactions: [], reports: [], createdAt: new Date().toISOString(),
     }))
-    const guest = env.authenticatedContext('guest-1', { firebase: { sign_in_provider: 'anonymous' } }).firestore()
+    const guest = env.unauthenticatedContext().firestore()
+    const member = env.authenticatedContext('member-2', { firebase: { sign_in_provider: 'google.com' } }).firestore()
     const author = env.authenticatedContext('member-1', { firebase: { sign_in_provider: 'google.com' } }).firestore()
     await assertSucceeds(getDoc(doc(guest, 'wishes/w2')))
-    await assertSucceeds(updateDoc(doc(guest, 'wishes/w2'), { reactions: ['guest-1'] }))
-    await assertFails(updateDoc(doc(author, 'wishes/w2'), { reactions: ['guest-1', 'member-1'] }))
-    expect((await getDoc(doc(guest, 'wishes/w2'))).data()?.reactions).toEqual(['guest-1'])
+    await assertFails(updateDoc(doc(guest, 'wishes/w2'), { reactions: ['guest-1'] }))
+    await assertSucceeds(updateDoc(doc(member, 'wishes/w2'), { reactions: ['member-2'] }))
+    await assertFails(updateDoc(doc(author, 'wishes/w2'), { reactions: ['member-2', 'member-1'] }))
+    expect((await getDoc(doc(guest, 'wishes/w2'))).data()?.reactions).toEqual(['member-2'])
   })
 })

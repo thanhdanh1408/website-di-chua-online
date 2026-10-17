@@ -36,15 +36,14 @@ VITE_FIREBASE_APP_ID=...
 
 Các giá trị Firebase Web config không phải private key; quyền truy cập dữ liệu vẫn do Authentication và Firestore Rules kiểm soát. Tuyệt đối không đặt service-account private key vào biến `VITE_*` vì Vite đưa các biến này vào bundle trình duyệt.
 
-## 3. Bật đăng nhập Google và khách vãng lai
+## 3. Bật đăng nhập Google
 
 1. Trong Firebase Console, vào **Build > Authentication** và chọn **Get started**.
 2. Mở tab **Sign-in method**.
 3. Chọn **Google**, bật **Enable**, chọn email hỗ trợ và **Save**.
-4. Chọn **Anonymous**, bật **Enable** và **Save**.
-5. Mở **Authentication > Settings > Authorized domains**. Thêm domain production của bạn nếu chưa có. `localhost` dùng cho local development thường đã hiện sẵn.
+4. Mở **Authentication > Settings > Authorized domains**. Thêm domain production của bạn nếu chưa có. `localhost` dùng cho local development thường đã hiện sẵn.
 
-Anonymous Auth chỉ cấp một UID kỹ thuật để khách lưu hoạt động và reaction an toàn. Thành viên thật và admin đều đăng nhập bằng Google; project không hỗ trợ email/password tự tạo.
+Khách chưa đăng nhập chỉ tham quan và dùng các nghi thức trong phiên hiện tại. Muốn lưu hành trình, reaction, báo cáo, điểm danh hoặc gửi lời nguyện thì phải đăng nhập Google. Project không dùng Anonymous Auth hoặc email/password tự tạo.
 
 ## 4. Tạo Cloud Firestore và deploy bảo mật
 
@@ -116,6 +115,7 @@ npm run lint         # ESLint
 npm test             # unit test nghiệp vụ
 npm run test:rules   # Firestore Emulator + security tests
 npm run test:mobile  # cần dev server ở http://127.0.0.1:4175
+npm run test:firebase-auth # cần dev server ở http://localhost:4175
 npm audit --omit=dev
 ```
 
