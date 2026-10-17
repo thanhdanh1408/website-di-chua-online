@@ -33,6 +33,13 @@ mkdirSync('mobile-artifacts', { recursive: true })
 
 for (const viewport of viewports) {
   const context = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile: true, hasTouch: true })
+  await context.addInitScript(() => {
+    window.__audioPlayCalls = 0
+    HTMLMediaElement.prototype.play = function () {
+      window.__audioPlayCalls += 1
+      return Promise.resolve()
+    }
+  })
   const page = await context.newPage()
   const consoleErrors = []
   const failedResources = []
@@ -70,10 +77,19 @@ for (const viewport of viewports) {
   }
   await page.goto(baseURL, { waitUntil: 'domcontentloaded' })
   await page.locator('.app-shell').waitFor({ state: 'visible' })
+  if (!(await page.locator('.header-actions .account').isVisible()))
+    failures.push(`${viewport.name}: icon tài khoản không hiển thị`)
   await page.locator('.menu-button').click()
   if (!(await page.locator('.main-nav').evaluate(element => element.classList.contains('open'))))
     failures.push(`${viewport.name}: menu mobile không mở`)
   if ((await page.locator('.main-nav a').count()) !== 6) failures.push(`${viewport.name}: menu mobile thiếu liên kết`)
+  await page.goto(`${baseURL}/chua/an-nhien`, { waitUntil: 'domcontentloaded' })
+  await page.locator('.woodblock').waitFor({ state: 'visible' })
+  const enableSound = page.getByRole('button', { name: 'Bật âm thanh' })
+  if (await enableSound.isVisible().catch(() => false)) await enableSound.click()
+  await page.locator('.woodblock').click()
+  const audioPlayCalls = await page.evaluate(() => window.__audioPlayCalls)
+  if (audioPlayCalls < 1) failures.push(`${viewport.name}: gõ mõ không gọi phát âm thanh`)
   if (consoleErrors.length) failures.push(...consoleErrors.map(error => `${viewport.name}: console ${error}`))
   if (failedResources.length)
     failures.push(...[...new Set(failedResources)].map(error => `${viewport.name}: resource ${error}`))

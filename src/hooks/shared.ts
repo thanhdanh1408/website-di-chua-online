@@ -23,7 +23,7 @@ export const emptyState = (): PersistedState => ({
   reports: [],
   checkins: [],
   offerings: [],
-  soundOn: false,
+  soundOn: true,
 })
 
 export type PersonalData = Pick<
@@ -50,5 +50,5 @@ export const readPersonal = (data: DocumentData): Partial<PersonalData> => ({
   draws: Array.isArray(data.draws) ? data.draws : [],
   checkins: Array.isArray(data.checkins) ? data.checkins : [],
   offerings: Array.isArray(data.offerings) ? data.offerings : [],
-  soundOn: data.soundOn === true,
+  soundOn: typeof data.soundOn === 'boolean' ? data.soundOn : true,
 })

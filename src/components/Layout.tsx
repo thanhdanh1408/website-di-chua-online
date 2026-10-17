@@ -15,7 +15,7 @@ const nav = [
 ]
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { state, setSound } = useApp()
+  const { state, setSound, setToast } = useApp()
   const [open, setOpen] = useState(false)
   const level = getLevel(state.merit)
   return (
@@ -40,7 +40,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <button
             className="icon-button"
             aria-label={state.soundOn ? 'Tắt âm thanh' : 'Bật âm thanh'}
-            onClick={() => setSound(!state.soundOn)}
+            onClick={() => {
+              const enabled = !state.soundOn
+              setSound(enabled)
+              setToast(enabled ? 'Âm thanh đã bật · chạm vào mõ để nghe.' : 'Âm thanh đã tắt.')
+            }}
           >
             {state.soundOn ? <Volume2 /> : <VolumeX />}
           </button>

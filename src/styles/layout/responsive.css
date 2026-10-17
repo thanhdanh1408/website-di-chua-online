@@ -654,8 +654,12 @@
     width: 36px;
     height: 36px;
   }
+  .header-actions {
+    gap: 6px;
+    flex-shrink: 0;
+  }
   .header-actions .account {
-    display: none;
+    display: grid;
   }
   .page-container {
     padding: 55px 17px 75px;

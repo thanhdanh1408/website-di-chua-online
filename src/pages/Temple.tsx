@@ -5,12 +5,25 @@ import { useApp } from '../store/AppContext'
 let woodblockAudioContext: AudioContext | null = null
 let woodblockSample: AudioBuffer | null = null
 let woodblockSampleData: Promise<ArrayBuffer> | null = null
+let woodblockPlayers: HTMLAudioElement[] = []
+let woodblockPlayerIndex = 0
 
 function preloadWoodblockSample() {
+  if (!woodblockPlayers.length && typeof Audio !== 'undefined') {
+    woodblockPlayers = Array.from({ length: 4 }, () => {
+      const player = new Audio('/audio/mokugyo.mp3')
+      player.preload = 'auto'
+      player.volume = 0.9
+      player.setAttribute('playsinline', '')
+      player.load()
+      return player
+    })
+  }
   woodblockSampleData ??= fetch('/audio/mokugyo.mp3').then(response => {
     if (!response.ok) throw new Error('Unable to load mokugyo sample')
     return response.arrayBuffer()
   })
+  void woodblockSampleData.catch(() => undefined)
 }
 
 function playSynthWoodblock(ctx: AudioContext) {
@@ -54,6 +67,17 @@ function playSynthWoodblock(ctx: AudioContext) {
 }
 
 async function playWoodblock() {
+  preloadWoodblockSample()
+  const player = woodblockPlayers[woodblockPlayerIndex++ % woodblockPlayers.length]
+  if (player) {
+    try {
+      player.currentTime = 0
+      await player.play()
+      return
+    } catch {
+      // Web Audio below is a fallback for browsers that reject HTML audio playback.
+    }
+  }
   const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
   if (!AudioCtx) return
   const ctx = woodblockAudioContext ?? new AudioCtx()
