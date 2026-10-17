@@ -14,6 +14,8 @@ const browser = await chromium.launch({ executablePath, headless: true })
 const context = await browser.newContext()
 const page = await context.newPage()
 try {
+  await page.goto(baseURL, { waitUntil: 'domcontentloaded' })
+  if (await page.getByRole('link', { name: 'Quản trị', exact: true }).count()) throw new Error('Khách hoặc người dùng thường vẫn nhìn thấy liên kết Quản trị.')
   await page.goto(`${baseURL}/admin`, { waitUntil: 'domcontentloaded' })
   await page.getByRole('heading', { name: 'Khu vực quản trị' }).waitFor({ state: 'visible' })
   if (!await page.getByRole('link', { name: 'Đăng nhập bằng Google' }).isVisible()) throw new Error('Trang quản trị chưa khóa đúng khi chưa có quyền admin.')

@@ -22,6 +22,6 @@ export function Layout({children}:{children:React.ReactNode}){
       </div>
     </header>
     <main>{children}</main>
-    <footer><div className="footer-brand"><span className="brand-mark small">安</span><div><b>An Nhiên Tự</b><p>Không gian số dành cho sự tĩnh tâm.</p></div></div><div className="footer-links"><Link to="/gioi-thieu">Giới thiệu & quyền riêng tư</Link><Link to="/admin">Quản trị</Link></div><p className="disclaimer"><BellRing size={15}/> Trải nghiệm mang tính giải trí và tĩnh tâm, không thay thế nghi lễ thực tế.</p></footer>
+    <footer><div className="footer-brand"><span className="brand-mark small">安</span><div><b>An Nhiên Tự</b><p>Không gian số dành cho sự tĩnh tâm.</p></div></div><div className="footer-links"><Link to="/gioi-thieu">Giới thiệu & quyền riêng tư</Link>{state.user?.role==='admin'&&<Link to="/admin">Quản trị</Link>}</div><p className="disclaimer"><BellRing size={15}/> Trải nghiệm mang tính giải trí và tĩnh tâm, không thay thế nghi lễ thực tế.</p></footer>
   </div>
 }
