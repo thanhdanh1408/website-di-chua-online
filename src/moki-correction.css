@@ -1,0 +1,8 @@
+/* Correct striking posture: the hand/pivot stays outside on the right,
+   while the padded head travels downward onto the upper face of the mõ. */
+.woodblock .stick{width:125px;height:9px;right:-62px;top:54px;transform:rotate(28deg);transform-origin:calc(100% - 8px) 50%}
+.woodblock .stick i{left:-13px;right:auto;top:-9px}
+.impact-glow{left:78px;right:auto;top:34px}
+.impact-sparks{left:86px;right:auto;top:41px}
+@keyframes malletStrike{0%{transform:rotate(28deg) translateZ(0)}40%{transform:rotate(8deg) translateZ(0)}49%{transform:rotate(6deg) translateZ(0)}64%{transform:rotate(15deg) translateZ(0)}82%{transform:rotate(25deg) translateZ(0)}100%{transform:rotate(28deg) translateZ(0)}}
+@media(max-width:560px){.woodblock .stick{width:112px;right:-48px;top:53px}.woodblock .stick i{left:-12px;right:auto;width:23px;height:23px}.impact-glow{left:77px;right:auto}.impact-sparks{left:85px;right:auto}}

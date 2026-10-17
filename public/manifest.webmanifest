@@ -1,0 +1,10 @@
+{
+  "name": "An Nhiên Tự — Đi chùa online",
+  "short_name": "An Nhiên Tự",
+  "description": "Một khoảng tĩnh tâm nhẹ nhàng trên không gian số.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f3ea",
+  "theme_color": "#8e382c",
+  "lang": "vi"
+}

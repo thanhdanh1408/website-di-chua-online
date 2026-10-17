@@ -1,0 +1,8 @@
+.firebase-auth-panel{padding:50px;display:flex;flex-direction:column;justify-content:center;gap:18px}
+.firebase-auth-panel h2{font-size:30px;margin:0}
+.firebase-auth-panel>p{font-size:11px;line-height:1.8;color:var(--muted)}
+.firebase-auth-panel>small{font-size:9px;color:#937f71;text-align:center}
+.firebase-error{padding:12px 14px!important;background:#f7e3df;border:1px solid #d9afa6;color:#813f35!important}
+.profile-avatar:is(img){object-fit:cover;border:2px solid #d7b98f}
+@media(max-width:560px){.firebase-auth-panel{padding:38px 24px}}
+.page-loader{min-height:60vh;display:grid;place-items:center;color:var(--muted);font:20px var(--serif)}

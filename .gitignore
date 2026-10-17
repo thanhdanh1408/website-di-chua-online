@@ -1,0 +1,14 @@
+node_modules
+dist
+.vite
+*.local
+.env
+.env.admin
+service-account*.json
+.firebaserc
+mobile-artifacts
+firestore-debug.log
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+.DS_Store
