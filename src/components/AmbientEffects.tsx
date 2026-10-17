@@ -37,16 +37,31 @@ export function AmbientEffects() {
       })
     }
     window.addEventListener('pointermove', move, { passive: true })
-    return () => { cancelAnimationFrame(frame); window.removeEventListener('pointermove', move) }
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('pointermove', move)
+    }
   }, [])
 
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const elements = document.querySelectorAll<HTMLElement>('main section, main .page-heading, main article, main aside')
-    if (reduce) { elements.forEach(el => el.classList.add('is-visible')); return }
-    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
-      if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target) }
-    }), { threshold: .08, rootMargin: '0px 0px -35px' })
+    const elements = document.querySelectorAll<HTMLElement>(
+      'main section, main .page-heading, main article, main aside'
+    )
+    if (reduce) {
+      elements.forEach(el => el.classList.add('is-visible'))
+      return
+    }
+    const observer = new IntersectionObserver(
+      entries =>
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible')
+            observer.unobserve(entry.target)
+          }
+        }),
+      { threshold: 0.08, rootMargin: '0px 0px -35px' }
+    )
     elements.forEach((el, index) => {
       el.classList.add('reveal-on-scroll')
       el.style.setProperty('--reveal-delay', `${Math.min(index % 4, 3) * 65}ms`)
@@ -62,7 +77,8 @@ export function AmbientEffects() {
       const node = document.createElement('span')
       node.className = 'click-ripple'
       node.dataset.id = String(++rippleId.current)
-      node.style.left = `${event.clientX}px`; node.style.top = `${event.clientY}px`
+      node.style.left = `${event.clientX}px`
+      node.style.top = `${event.clientY}px`
       document.body.appendChild(node)
       node.addEventListener('animationend', () => node.remove(), { once: true })
     }
@@ -70,9 +86,25 @@ export function AmbientEffects() {
     return () => window.removeEventListener('pointerdown', ripple)
   }, [])
 
-  return <>
-    <div className="scroll-progress" style={{ transform: `scaleX(${progress / 100})` }} />
-    <div ref={glowRef} className="cursor-ambient" aria-hidden="true" />
-    <div className="ambient-motes" aria-hidden="true">{motes.map(mote => <i key={mote.id} style={{ left:`${mote.x}%`, top:`${mote.y}%`, width:mote.size, height:mote.size, animationDelay:`${mote.delay}s`, animationDuration:`${mote.duration}s` }} />)}</div>
-  </>
+  return (
+    <>
+      <div className="scroll-progress" style={{ transform: `scaleX(${progress / 100})` }} />
+      <div ref={glowRef} className="cursor-ambient" aria-hidden="true" />
+      <div className="ambient-motes" aria-hidden="true">
+        {motes.map(mote => (
+          <i
+            key={mote.id}
+            style={{
+              left: `${mote.x}%`,
+              top: `${mote.y}%`,
+              width: mote.size,
+              height: mote.size,
+              animationDelay: `${mote.delay}s`,
+              animationDuration: `${mote.duration}s`,
+            }}
+          />
+        ))}
+      </div>
+    </>
+  )
 }

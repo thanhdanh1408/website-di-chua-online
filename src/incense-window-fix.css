@@ -1,4 +1,0 @@
-/* Keep the scene's animation identity stable while lighting.
-   Switching from altarWarmth back to altarReveal restarted its clip-path,
-   which looked like the whole altar closed and reopened. */
-.altar-scene,.altar-scene.is-lighting{animation-name:altarReveal;animation-duration:1s;animation-timing-function:cubic-bezier(.2,.8,.2,1);animation-fill-mode:both}

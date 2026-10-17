@@ -1,4 +1,85 @@
 import { useEffect, useState } from 'react'
 import { CirclePause, CirclePlay, RotateCcw, Volume2 } from 'lucide-react'
 
-export function MeditationPage(){const[minutes,setMinutes]=useState(5);const[remaining,setRemaining]=useState(300);const[running,setRunning]=useState(false);useEffect(()=>{setRemaining(minutes*60);setRunning(false)},[minutes]);useEffect(()=>{if(!running)return;const t=setInterval(()=>setRemaining(r=>{if(r<=1){setRunning(false);return 0}return r-1}),1000);return()=>clearInterval(t)},[running]);const pct=1-remaining/(minutes*60);return <div className="meditation-page"><header className="page-heading"><p className="eyebrow centered"><span/> Trở về hơi thở <span/></p><h1>Ngồi yên <em>một lát</em></h1><p>Không cần làm gì cả. Chỉ thở, lắng nghe và cho mình được hiện diện.</p></header><section className="meditation-space"><div className={`breathing-orb ${running?'breathing':''}`} style={{'--progress':`${pct*360}deg`} as React.CSSProperties}><div><span>{running?'Thở thật chậm':'Sẵn sàng'}</span><strong>{Math.floor(remaining/60).toString().padStart(2,'0')}:{(remaining%60).toString().padStart(2,'0')}</strong><small>{running?'Hít vào · Thở ra':'Chọn thời lượng và bắt đầu'}</small></div></div><div className="duration-picker">{[5,10,15].map(x=><button className={minutes===x?'active':''} onClick={()=>setMinutes(x)} key={x}>{x} phút</button>)}</div><div className="meditation-actions"><button className="icon-button large" onClick={()=>{setRunning(false);setRemaining(minutes*60)}} aria-label="Đặt lại"><RotateCcw/></button><button className="play-button" onClick={()=>setRunning(!running)}>{running?<CirclePause/>:<CirclePlay/>}<span>{running?'Tạm dừng':'Bắt đầu thiền'}</span></button><button className="icon-button large" aria-label="Âm thanh"><Volume2/></button></div><p className="breath-guide">Hít vào bằng mũi trong 4 nhịp · Giữ 2 nhịp · Thở ra nhẹ nhàng trong 6 nhịp</p></section></div>}
+export function MeditationPage() {
+  const [minutes, setMinutes] = useState(5)
+  const [remaining, setRemaining] = useState(300)
+  const [running, setRunning] = useState(false)
+  useEffect(() => {
+    setRemaining(minutes * 60)
+    setRunning(false)
+  }, [minutes])
+  useEffect(() => {
+    if (!running) return
+    const t = setInterval(
+      () =>
+        setRemaining(r => {
+          if (r <= 1) {
+            setRunning(false)
+            return 0
+          }
+          return r - 1
+        }),
+      1000
+    )
+    return () => clearInterval(t)
+  }, [running])
+  const pct = 1 - remaining / (minutes * 60)
+  return (
+    <div className="meditation-page">
+      <header className="page-heading">
+        <p className="eyebrow centered">
+          <span /> Trở về hơi thở <span />
+        </p>
+        <h1>
+          Ngồi yên <em>một lát</em>
+        </h1>
+        <p>Không cần làm gì cả. Chỉ thở, lắng nghe và cho mình được hiện diện.</p>
+      </header>
+      <section className="meditation-space">
+        <div
+          className={`breathing-orb ${running ? 'breathing' : ''}`}
+          style={{ '--progress': `${pct * 360}deg` } as React.CSSProperties}
+        >
+          <div>
+            <span>{running ? 'Thở thật chậm' : 'Sẵn sàng'}</span>
+            <strong>
+              {Math.floor(remaining / 60)
+                .toString()
+                .padStart(2, '0')}
+              :{(remaining % 60).toString().padStart(2, '0')}
+            </strong>
+            <small>{running ? 'Hít vào · Thở ra' : 'Chọn thời lượng và bắt đầu'}</small>
+          </div>
+        </div>
+        <div className="duration-picker">
+          {[5, 10, 15].map(x => (
+            <button className={minutes === x ? 'active' : ''} onClick={() => setMinutes(x)} key={x}>
+              {x} phút
+            </button>
+          ))}
+        </div>
+        <div className="meditation-actions">
+          <button
+            className="icon-button large"
+            onClick={() => {
+              setRunning(false)
+              setRemaining(minutes * 60)
+            }}
+            aria-label="Đặt lại"
+          >
+            <RotateCcw />
+          </button>
+          <button className="play-button" onClick={() => setRunning(!running)}>
+            {running ? <CirclePause /> : <CirclePlay />}
+            <span>{running ? 'Tạm dừng' : 'Bắt đầu thiền'}</span>
+          </button>
+          <button className="icon-button large" aria-label="Âm thanh">
+            <Volume2 />
+          </button>
+        </div>
+        <p className="breath-guide">Hít vào bằng mũi trong 4 nhịp · Giữ 2 nhịp · Thở ra nhẹ nhàng trong 6 nhịp</p>
+      </section>
+    </div>
+  )
+}

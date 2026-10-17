@@ -14,9 +14,28 @@ import { AdminPage } from './pages/AdminPage'
 
 const CalendarPage = lazy(() => import('./pages/CalendarPage').then(module => ({ default: module.CalendarPage })))
 
-export function App(){const location=useLocation();return <Layout><div className="route-stage" key={location.pathname}><Suspense fallback={<div className="page-container page-loader">Đang mở lịch an lành…</div>}><Routes location={location}>
-  <Route path="/" element={<Home/>}/><Route path="/chua/:slug" element={<Temple/>}/><Route path="/xin-xam" element={<FortunePage/>}/>
-  <Route path="/to-nguyen" element={<WishesPage/>}/><Route path="/cong-duc" element={<MeritPage/>}/><Route path="/lich" element={<CalendarPage/>}/>
-  <Route path="/thien" element={<MeditationPage/>}/><Route path="/tai-khoan" element={<AccountPage/>}/><Route path="/gioi-thieu" element={<AboutPage/>}/>
-  <Route path="/admin" element={<AdminPage/>}/><Route path="*" element={<Navigate to="/" replace/>}/>
-  </Routes></Suspense></div><Toast/></Layout>}
+export function App() {
+  const location = useLocation()
+  return (
+    <Layout>
+      <div className="route-stage" key={location.pathname}>
+        <Suspense fallback={<div className="page-container page-loader">Đang mở lịch an lành…</div>}>
+          <Routes location={location}>
+            <Route path="/" element={<Home />} />
+            <Route path="/chua/:slug" element={<Temple />} />
+            <Route path="/xin-xam" element={<FortunePage />} />
+            <Route path="/to-nguyen" element={<WishesPage />} />
+            <Route path="/cong-duc" element={<MeritPage />} />
+            <Route path="/lich" element={<CalendarPage />} />
+            <Route path="/thien" element={<MeditationPage />} />
+            <Route path="/tai-khoan" element={<AccountPage />} />
+            <Route path="/gioi-thieu" element={<AboutPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </div>
+      <Toast />
+    </Layout>
+  )
+}

@@ -1,0 +1,18 @@
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--serif);
+  font-weight: 500;
+}
+
+em {
+  color: var(--red);
+  font-style: italic;
+}

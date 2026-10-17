@@ -9,14 +9,14 @@ describe('quy tắc công đức', () => {
     expect(getLevel(1500).name).toBe('Thanh tịnh')
   })
   it('chỉ cộng nhật ký trong ngày Việt Nam', () => {
-    const logs = [{ id:'1', source:'incense', points:3, at:new Date().toISOString(), label:'test' }] as MeritLog[]
+    const logs = [{ id: '1', source: 'incense', points: 3, at: new Date().toISOString(), label: 'test' }] as MeritLog[]
     expect(pointsToday(logs, 'incense')).toBe(3)
   })
 })
 
 describe('quy tắc xin quẻ', () => {
   it('loại quẻ đã rút trong bảy ngày', () => {
-    const draws: FortuneDraw[] = [{ fortuneId:2, at:new Date().toISOString() }]
+    const draws: FortuneDraw[] = [{ fortuneId: 2, at: new Date().toISOString() }]
     expect(eligibleFortuneIds(draws, 3)).toEqual([1, 3])
   })
 })
@@ -28,13 +28,21 @@ describe('kiểm duyệt lời nguyện', () => {
     expect(validateWish('Số điện thoại của tôi là 0912345678')).toBeTruthy()
     expect(validateWish('Xem thêm tại https://example.com nhé')).toBeTruthy()
   })
-  it('chấp nhận nội dung tích cực hợp lệ', () => expect(validateWish('Mong mọi người luôn mạnh khỏe và bình an.')).toBeNull())
+  it('chấp nhận nội dung tích cực hợp lệ', () =>
+    expect(validateWish('Mong mọi người luôn mạnh khỏe và bình an.')).toBeNull())
   it('chỉ hiện nội dung đã duyệt và chưa đủ ba báo cáo', () => {
-    const base = { authorId:'u', author:'An', content:'Một lời nguyện đủ dài', anonymous:false, reactions:[], createdAt:new Date().toISOString() }
+    const base = {
+      authorId: 'u',
+      author: 'An',
+      content: 'Một lời nguyện đủ dài',
+      anonymous: false,
+      reactions: [],
+      createdAt: new Date().toISOString(),
+    }
     const wishes = [
-      { ...base, id:'1', status:'approved', reports:[] },
-      { ...base, id:'2', status:'pending', reports:[] },
-      { ...base, id:'3', status:'approved', reports:['a','b','c'] },
+      { ...base, id: '1', status: 'approved', reports: [] },
+      { ...base, id: '2', status: 'pending', reports: [] },
+      { ...base, id: '3', status: 'approved', reports: ['a', 'b', 'c'] },
     ] as Wish[]
     expect(visibleWishes(wishes).map(w => w.id)).toEqual(['1'])
   })
